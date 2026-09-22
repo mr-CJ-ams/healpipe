@@ -15,7 +15,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [signOutOpen, setSignOutOpen] = useState(false)
-  const [theme, setTheme] = useState(() => window.localStorage.getItem('healpipe_theme') || 'light')
+  const [theme, setTheme] = useState(() => window.localStorage.getItem('healpipe_theme') || 'dark')
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme

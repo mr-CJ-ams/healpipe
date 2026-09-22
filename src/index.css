@@ -92,7 +92,7 @@ button { font: inherit; cursor: pointer; }
 .page-wrap { max-width: 1280px; margin: 0 auto; padding: 34px 20px 56px; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid rgba(215,255,241,.1); }
 .eyebrow { color: #6ee7b7; font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
-.page-title { margin-top: 8px; color: #f4faf8; font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -.03em; }
+.page-title { margin-top: 8px; color: var(--app-text); font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -.03em; }
 .page-subtitle { margin-top: 8px; max-width: 650px; color: #81928b; font-size: 13px; line-height: 1.6; }
 
 .icon-button {
