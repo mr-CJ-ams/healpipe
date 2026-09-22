@@ -34,6 +34,8 @@ export default function App() {
   if (!user) return <LoginPage theme={theme} onToggleTheme={toggleTheme} onAuthenticated={(result) => {
     window.localStorage.setItem(USER_KEY, JSON.stringify(result.user))
     setUser(result.user)
+    setTheme('dark')
+    window.localStorage.setItem('healpipe_theme', 'dark')
     setOnboardingRequired(result.onboarding_required)
   }} />
   if (onboardingRequired) return <OnboardingPage user={user} theme={theme} onToggleTheme={toggleTheme} onComplete={() => setOnboardingRequired(false)} />
