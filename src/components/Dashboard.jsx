@@ -326,7 +326,7 @@ function NewBridgeModal({ onClose }) {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onOpenBridges }) {
   const [stats, setStats] = useState({ validated: 0, healed: 0, rejected: 0, uncertain: 0, delivery_failed: 0, dropped: 0, idempotency_blocked: 0 })
   const [events, setEvents] = useState([])
   const [bridges, setBridges] = useState([])
@@ -379,6 +379,7 @@ export default function Dashboard() {
   )
   const activeBridges = bridges.filter((bridge) => bridge.is_active)
   const total = Object.values(stats).reduce((sum, count) => sum + count, 0)
+  const isNewWorkspace = !loading && bridges.length === 0
 
   async function handleMapField(eventId) {
     try {
@@ -426,6 +427,7 @@ export default function Dashboard() {
           </div>
         </header>
 
+        {isNewWorkspace && <section className="dashboard-empty-state panel"><div className="dashboard-empty-icon"><Database size={24} /></div><p className="eyebrow">Your control room is ready</p><h2>Start by connecting a data bridge.</h2><p className="dashboard-empty-copy">A bridge gives HealPipe a signed entry point for your source system and a destination for repaired payloads. Once the first event arrives, your delivery trail will appear here.</p><div className="dashboard-empty-steps"><span><b>01</b> Create a bridge</span><span><b>02</b> Add it to your source platform</span><span><b>03</b> Watch events move</span></div><button className="dashboard-empty-cta" onClick={onOpenBridges}>Create your first data bridge <ArrowRight size={16} /></button></section>}
         <section className="grid gap-3 py-6 sm:grid-cols-2 xl:grid-cols-7">
           <StatCard label="Validated" value={stats.validated} note="Clean on first pass" icon={CheckCircle2} accent="text-emerald-300" />
           <StatCard label="Healed" value={stats.healed} note="Recovered automatically" icon={Sparkles} accent="text-amber-300" />
@@ -437,7 +439,7 @@ export default function Dashboard() {
         </section>
 
         <section className="panel overflow-hidden">
-          {!selectedBridgeId && <div className="mx-5 mt-5 rounded-xl border border-amber-300/20 bg-amber-400/10 p-4 text-sm text-amber-100 sm:mx-6"><p className="font-semibold">Select a data bridge to view operational metrics.</p><p className="mt-1 text-amber-100/70">Global and unscoped activity is intentionally hidden to preserve tenant isolation.</p></div>}
+          {!selectedBridgeId && <div className="mx-5 mt-5 rounded-xl border border-amber-300/20 bg-amber-400/10 p-4 text-sm text-amber-100 sm:mx-6"><p className="font-semibold">Select a data bridge to view operational metrics.</p><p className="mt-1 text-amber-100">Global and unscoped activity is intentionally hidden to preserve tenant isolation.</p></div>}
           <div className="flex flex-col gap-4 border-b border-white/10 p-4 sm:p-5">
             <div>
               <div className="flex items-center gap-2"><Activity size={16} className="text-emerald-300" /><h2 className="font-display text-base font-semibold text-white">Event stream</h2></div>

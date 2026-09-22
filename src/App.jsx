@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, ChevronLeft, ChevronRight, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import BridgesManager from './components/BridgesManager'
 import LoginPage from './components/LoginPage'
@@ -15,6 +15,12 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [signOutOpen, setSignOutOpen] = useState(false)
+  const [theme, setTheme] = useState(() => window.localStorage.getItem('healpipe_theme') || 'light')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    window.localStorage.setItem('healpipe_theme', theme)
+  }, [theme])
 
   useEffect(() => {
     const storedUser = window.localStorage.getItem(USER_KEY)
@@ -23,12 +29,14 @@ export default function App() {
     }
   }, [])
 
-  if (!user) return <LoginPage onAuthenticated={(result) => {
+  const toggleTheme = () => setTheme((value) => value === 'light' ? 'dark' : 'light')
+
+  if (!user) return <LoginPage theme={theme} onToggleTheme={toggleTheme} onAuthenticated={(result) => {
     window.localStorage.setItem(USER_KEY, JSON.stringify(result.user))
     setUser(result.user)
     setOnboardingRequired(result.onboarding_required)
   }} />
-  if (onboardingRequired) return <OnboardingPage user={user} onComplete={() => setOnboardingRequired(false)} />
+  if (onboardingRequired) return <OnboardingPage user={user} theme={theme} onToggleTheme={toggleTheme} onComplete={() => setOnboardingRequired(false)} />
 
   function logout() {
     window.localStorage.removeItem(SESSION_KEY)
@@ -64,11 +72,12 @@ export default function App() {
             <p className="topbar-label">{activeView === 'telemetry' ? 'Dashboard' : 'Data bridges'}</p>
           </div>
           <div className="relative">
+            <button className="theme-button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
             <button className={`account-button ${accountOpen ? 'account-button-active' : ''}`} onClick={() => setAccountOpen((value) => !value)} aria-label="Open account menu" title="Account"><UserRound size={18} /></button>
             {accountOpen && <div className="account-menu"><p className="account-menu-label">Signed in as</p><p className="account-email">{user?.email || 'Email unavailable'}</p><button className="account-signout" onClick={() => setSignOutOpen(true)}><LogOut size={15} />Sign out</button></div>}
           </div>
         </header>
-        {activeView === 'telemetry' ? <Dashboard /> : <BridgesManager />}
+        {activeView === 'telemetry' ? <Dashboard onOpenBridges={() => setActiveView('bridges')} /> : <BridgesManager />}
       </div>
       {signOutOpen && <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSignOutOpen(false)}><section className="signout-modal" role="dialog" aria-modal="true" aria-labelledby="signout-title"><button className="modal-close" onClick={() => setSignOutOpen(false)} aria-label="Close sign out confirmation"><X size={16} /></button><div className="modal-icon"><LogOut size={20} /></div><h2 id="signout-title">Are you sure you want to Sign out?</h2><p>Your current HealPipe session will be closed on this device.</p><div className="modal-actions"><button className="modal-button modal-button-secondary" onClick={() => setSignOutOpen(false)}>No</button><button className="modal-button modal-button-danger" onClick={logout}>Yes, sign out</button></div></section></div>}
     </div>
