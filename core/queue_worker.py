@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+import os
 import queue
 import threading
 import time
@@ -215,6 +216,8 @@ def enqueue_delivery(
     is_replay: bool = False,
     idempotency_key: str | None = None,
 ) -> None:
+    if os.getenv("HEALPIPE_PROCESS_ROLE", "all").lower() == "api":
+        return
     if not _running.is_set():
         start_queue_workers()
     _jobs.put(DeliveryJob(job_id, event_id, payload, target_url, bridge_id, idempotency_key, is_replay))

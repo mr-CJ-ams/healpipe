@@ -100,25 +100,31 @@ async def delivery_recovery_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    start_queue_workers()
-    for recovered_job in await fetch_recoverable_delivery_jobs():
-        enqueue_delivery(
-            event_id=recovered_job.event_id,
-            payload=recovered_job.payload,
-            target_url=recovered_job.target_url,
-            bridge_id=recovered_job.bridge_id,
-            job_id=recovered_job.job_id,
-            idempotency_key=recovered_job.idempotency_key,
-        )
-    scheduler_task = asyncio.create_task(scheduler_loop())
-    delivery_recovery_task = asyncio.create_task(delivery_recovery_loop())
+    process_role = os.getenv("HEALPIPE_PROCESS_ROLE", "all").lower()
+    worker_tasks: list[asyncio.Task] = []
+    if process_role in {"all", "worker"}:
+        start_queue_workers()
+        for recovered_job in await fetch_recoverable_delivery_jobs():
+            enqueue_delivery(
+                event_id=recovered_job.event_id,
+                payload=recovered_job.payload,
+                target_url=recovered_job.target_url,
+                bridge_id=recovered_job.bridge_id,
+                job_id=recovered_job.job_id,
+                idempotency_key=recovered_job.idempotency_key,
+            )
+        worker_tasks = [
+            asyncio.create_task(scheduler_loop()),
+            asyncio.create_task(delivery_recovery_loop()),
+        ]
     try:
         yield
     finally:
-        scheduler_task.cancel()
-        delivery_recovery_task.cancel()
-        await asyncio.gather(scheduler_task, delivery_recovery_task, return_exceptions=True)
-        stop_queue_workers()
+        for task in worker_tasks:
+            task.cancel()
+        if worker_tasks:
+            await asyncio.gather(*worker_tasks, return_exceptions=True)
+            stop_queue_workers()
 
 
 app = FastAPI(title="HealPipe.io", version="0.1.0", lifespan=lifespan)

@@ -456,6 +456,8 @@ For production, add the real dashboard domain to Authorized JavaScript origins a
 
 ## Backend setup
 
+For the free pilot and production migration procedure, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 Create and activate the virtual environment:
 
 ```powershell
@@ -499,6 +501,9 @@ DATABASE_URL
 DB_POOL_SIZE
 DB_MAX_OVERFLOW
 CORS_ORIGINS
+HEALPIPE_PROCESS_ROLE
+DELIVERY_WORKER_COUNT
+WORKER_POLL_INTERVAL_SECONDS
 ANTHROPIC_API_KEY
 ANTHROPIC_MODEL
 OPERATOR_API_KEY
