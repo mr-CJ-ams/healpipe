@@ -1,6 +1,6 @@
-# HealPipe.io
+# HealPipe
 
-HealPipe.io is a signed, multi-tenant webhook middleware platform that receives inconsistent source payloads, normalizes and maps them into a destination schema, pauses uncertain data for review, and delivers approved payloads to CRM or operational systems.
+HealPipe is a signed, multi-tenant webhook middleware platform that receives inconsistent source payloads, normalizes and maps them into a destination schema, pauses uncertain data for review, and delivers approved payloads to CRM or operational systems.
 
 The platform is designed around durable evidence: every accepted event has persisted payload snapshots, mapping decisions, delivery attempts, retry outcomes, lifecycle transitions, and account ownership.
 
@@ -427,6 +427,32 @@ npm run dev
 ```
 
 The frontend normally runs at `http://localhost:5173`.
+
+### Google-only login
+
+The dashboard uses Google Identity Services. Google login is verified by the backend; the browser never sends a Google access token directly to application APIs.
+
+1. In Google Cloud Console, create or select a project and configure the OAuth consent screen.
+2. Create an OAuth client ID with application type `Web application`.
+3. Add `http://localhost:5173` and `http://127.0.0.1:5173` to **Authorized JavaScript origins**. Google Identity Services uses the browser origin; no OAuth redirect URI is required for this button flow.
+4. Add the client ID to both environments:
+
+```text
+# Backend .env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+AUTH_SESSION_SECRET=generate-a-long-random-secret
+AUTH_SESSION_TTL_SECONDS=28800
+
+# Frontend .env.local
+VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+5. Install the backend requirements and initialize the schema. The `google_identities` table is created automatically.
+
+Each first-time Google user receives a private HealPipe account and owner membership. Later sign-ins reopen the same account using Google's stable subject ID. Keep `AUTH_SESSION_SECRET` private and use a different value in each deployment.
+
+For production, add the real dashboard domain to Authorized JavaScript origins and `CORS_ORIGINS`, serve both dashboard and API over HTTPS, and set `ACCOUNT_AUTH_REQUIRED=true`.
 
 ## Backend setup
 

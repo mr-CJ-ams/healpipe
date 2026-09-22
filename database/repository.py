@@ -24,6 +24,8 @@ from database.models import (
     EventLifecycle,
     HealingEventRecord,
     IdempotencyClaim,
+    GoogleIdentity,
+        OnboardingProfile,
     InventoryMapping,
     MappingRule,
 )
@@ -62,6 +64,69 @@ async def create_account(name: str, actor_id: str = "local-operator") -> Account
         await session.commit()
         await session.refresh(account)
         return account
+
+
+async def get_or_create_google_account(*, google_subject: str, email: str, display_name: str | None) -> tuple[Account, str, bool]:
+    if async_session is None:
+        raise RuntimeError("DATABASE_URL is not configured")
+    async with async_session() as session:
+        identity_result = await session.execute(
+            select(GoogleIdentity).where(GoogleIdentity.google_subject == google_subject)
+        )
+        identity = identity_result.scalar_one_or_none()
+        now = datetime.now(timezone.utc)
+        if identity is not None:
+            identity.email = email
+            identity.display_name = display_name
+            identity.last_login_at = now
+            account = await session.get(Account, identity.account_id)
+            await session.commit()
+            if account is None:
+                raise RuntimeError("Google identity points to a missing account")
+            profile_result = await session.execute(select(OnboardingProfile).where(OnboardingProfile.account_id == account.account_id))
+            return account, "owner", profile_result.scalar_one_or_none() is None
+
+        account = Account(name=f"{display_name or email}'s workspace")
+        session.add(account)
+        await session.flush()
+        session.add(AccountMember(account_id=account.account_id, actor_id=f"google:{google_subject}", role="owner"))
+        session.add(GoogleIdentity(
+            account_id=account.account_id,
+            google_subject=google_subject,
+            email=email,
+            display_name=display_name,
+            last_login_at=now,
+        ))
+        await session.commit()
+        await session.refresh(account)
+        return account, "owner", True
+
+
+async def google_identity_exists(google_subject: str) -> bool:
+    if async_session is None:
+        raise RuntimeError("DATABASE_URL is not configured")
+    async with async_session() as session:
+        result = await session.execute(
+            select(GoogleIdentity.identity_id).where(GoogleIdentity.google_subject == google_subject)
+        )
+        return result.scalar_one_or_none() is not None
+
+
+async def save_onboarding_profile(account_id: Any, answers: dict[str, str]) -> OnboardingProfile:
+    if async_session is None:
+        raise RuntimeError("DATABASE_URL is not configured")
+    async with async_session() as session:
+        profile_result = await session.execute(select(OnboardingProfile).where(OnboardingProfile.account_id == account_id))
+        profile = profile_result.scalar_one_or_none()
+        if profile is None:
+            profile = OnboardingProfile(account_id=account_id, **answers)
+            session.add(profile)
+        else:
+            for key, value in answers.items():
+                setattr(profile, key, value)
+        await session.commit()
+        await session.refresh(profile)
+        return profile
 
 
 async def create_account_api_key(account_id: Any, scopes: list[str], role: str = "operator") -> tuple[str, ApiKey]:

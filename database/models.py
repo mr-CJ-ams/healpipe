@@ -36,6 +36,30 @@ class AccountMember(Base):
     __table_args__ = (UniqueConstraint("account_id", "actor_id", name="uq_account_member_actor"),)
 
 
+class GoogleIdentity(Base):
+    __tablename__ = "google_identities"
+
+    identity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("accounts.account_id"), nullable=False, index=True)
+    google_subject: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_login_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    
+class OnboardingProfile(Base):
+    __tablename__ = "onboarding_profiles"
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("accounts.account_id"), nullable=False, unique=True, index=True)
+    user_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    integration_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    primary_problem: Mapped[str] = mapped_column(String(64), nullable=False)
+    monthly_volume: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_role: Mapped[str] = mapped_column(String(64), nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class ApiKey(Base):
     __tablename__ = "api_keys"
 

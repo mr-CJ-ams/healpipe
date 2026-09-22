@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import axios from 'axios'
+import axios, { API_BASE_URL } from '../api'
 import {
   Activity,
   AlertTriangle,
@@ -17,7 +17,6 @@ import {
   XCircle,
 } from 'lucide-react'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 const FILTERS = ['all', 'validated', 'healed', 'rejected', 'uncertain', 'delivery_failed', 'dropped', 'idempotency_blocked']
 
 const statusMeta = {

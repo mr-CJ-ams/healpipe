@@ -5,6 +5,19 @@ from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class OnboardingRequest(BaseModel):
+    user_type: str = Field(min_length=1, max_length=64)
+    integration_type: str = Field(min_length=1, max_length=64)
+    primary_problem: str = Field(min_length=1, max_length=64)
+    monthly_volume: str = Field(min_length=1, max_length=64)
+    user_role: str = Field(min_length=1, max_length=64)
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(min_length=1)
+    mode: Literal["login", "signup"] = "login"
+
+
 class WebhookReceiveRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 

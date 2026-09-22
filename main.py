@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from core.ai_agent import resolve_ambiguous_schema
+from core.auth import bearer_session, create_session_token, verify_google_credential
 from core.algorithms import (
     DEFAULT_MATCH_THRESHOLD,
     apply_persisted_mappings,
@@ -50,6 +51,9 @@ from database.repository import (
     create_account,
     create_account_api_key,
     get_default_account,
+    get_or_create_google_account,
+    google_identity_exists,
+    save_onboarding_profile,
     resolve_api_key,
     write_audit_log,
     append_event_lifecycle,
@@ -72,6 +76,8 @@ from database.schemas import (
     TriageRequest,
     WebhookReceiveRequest,
     WebhookReceiveResponse,
+    OnboardingRequest,
+    GoogleLoginRequest,
 )
 from services.notification import send_pipeline_alert
 from services.scheduler import scheduler_loop
@@ -123,6 +129,41 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.post("/auth/google")
+async def google_login(payload: GoogleLoginRequest) -> dict[str, Any]:
+    credential = payload.credential
+    if not os.getenv("AUTH_SESSION_SECRET"):
+        raise HTTPException(status_code=503, detail="Browser session signing is not configured")
+    claims = verify_google_credential(credential)
+    identity_exists = await google_identity_exists(str(claims["sub"]))
+    if payload.mode == "signup" and identity_exists:
+        raise HTTPException(status_code=409, detail="An account already exists for this Google account. Please choose Login.")
+    if payload.mode == "login" and not identity_exists:
+        raise HTTPException(status_code=404, detail="No HealPipe account exists for this Google account. Please choose Sign up first.")
+    account, role, onboarding_required = await get_or_create_google_account(
+        google_subject=str(claims["sub"]),
+        email=str(claims["email"]),
+        display_name=claims.get("name"),
+    )
+    actor_id = f"google:{claims['sub']}"
+    await write_audit_log(account.account_id, actor_id, "auth.google_login", "account", str(account.account_id), after_state={"email": claims["email"]})
+    return {
+        "session_token": create_session_token(account_id=account.account_id, actor_id=actor_id, role=role),
+        "onboarding_required": onboarding_required,
+        "user": {"email": claims["email"], "name": claims.get("name") or claims["email"], "picture": claims.get("picture"), "account_name": account.name},
+    }
+
+
+@app.post("/auth/onboarding")
+async def complete_onboarding(request: OnboardingRequest, raw_request: Request) -> dict[str, bool]:
+    session = bearer_session(raw_request)
+    if session is None:
+        raise HTTPException(status_code=401, detail="A Google session is required")
+    profile = await save_onboarding_profile(UUID(session["account_id"]), request.model_dump())
+    await write_audit_log(UUID(session["account_id"]), session["actor_id"], "account.onboarding_completed", "onboarding_profile", str(profile.profile_id), after_state=request.model_dump())
+    return {"completed": True}
 
 
 def event_execution_log(status: str, detail: str) -> str:
@@ -320,6 +361,9 @@ def require_operator(request: Request) -> str:
 
 
 async def request_account(request: Request, scope: str | None = None) -> tuple[UUID, str]:
+    session = bearer_session(request)
+    if session is not None:
+        return UUID(session["account_id"]), session["actor_id"]
     raw_key = request.headers.get("X-API-Key")
     if raw_key:
         api_key = await resolve_api_key(raw_key)
@@ -337,6 +381,11 @@ async def request_account(request: Request, scope: str | None = None) -> tuple[U
 
 
 async def require_role(request: Request, allowed_roles: set[str]) -> tuple[UUID, str]:
+    session = bearer_session(request)
+    if session is not None:
+        if session.get("role") not in allowed_roles:
+            raise HTTPException(status_code=403, detail="Account role is insufficient")
+        return UUID(session["account_id"]), session["actor_id"]
     raw_key = request.headers.get("X-API-Key")
     if not raw_key:
         if os.getenv("ACCOUNT_AUTH_REQUIRED", "false").lower() == "true":
