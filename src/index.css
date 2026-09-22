@@ -46,6 +46,10 @@ button { font: inherit; cursor: pointer; }
 .app-sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .brand-mark { display: inline-flex; align-items: center; gap: 9px; color: var(--app-text); font-size: 13px; font-weight: 700; }
 .brand-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid rgba(110, 231, 183, 0.25); border-radius: 7px; color: #6ee7b7; background: rgba(110, 231, 183, 0.08); }
+.landing-logo { width: 32px; height: 32px; object-fit: contain; }
+.auth-logo { display: block; width: 72px; height: 72px; margin: 0 auto; object-fit: contain; }
+.dashboard-logo { width: 28px; height: 28px; object-fit: contain; }
+.sidebar-logo { width: 18px; height: 18px; object-fit: contain; flex: 0 0 auto; }
 .brand-context { padding-left: 10px; border-left: 1px solid rgba(215, 255, 241, 0.12); color: #64746e; font-size: 11px; font-weight: 500; }
 .sidebar-toggle, .mobile-menu-button, .account-button, .modal-close, .theme-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--app-border); border-radius: 8px; color: var(--app-muted); background: var(--app-surface-muted); }
 .sidebar-toggle { width: 30px; height: 30px; flex: 0 0 auto; }

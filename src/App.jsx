@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Activity, ChevronLeft, ChevronRight, LogOut, Menu, Moon, ShieldCheck, Sun, UserRound, X } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, LogOut, Menu, Moon, Sun, UserRound, X } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import BridgesManager from './components/BridgesManager'
 import LoginPage from './components/LoginPage'
@@ -54,7 +54,7 @@ export default function App() {
       <aside className={`app-sidebar ${sidebarCollapsed ? 'app-sidebar-collapsed' : ''}`}>
         <div className="app-sidebar-top">
           <button className="brand-mark" onClick={() => setActiveView('telemetry')} aria-label="Open dashboard">
-            <span className="brand-icon"><ShieldCheck size={15} /></span>
+            <img className="dashboard-logo" src={theme === 'dark' ? '/brand/logo-darkmode.png' : '/brand/logo-lightmode.png'} alt="HealPipe" />
             {!sidebarCollapsed && <><span>HealPipe</span><span className="brand-context">Operations</span></>}
           </button>
           <button className="sidebar-toggle" onClick={() => setSidebarCollapsed((value) => !value)} aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
@@ -63,7 +63,7 @@ export default function App() {
         </div>
         <nav className="sidebar-nav" aria-label="Main navigation">
           <button onClick={() => setActiveView('telemetry')} className={`sidebar-link ${activeView === 'telemetry' ? 'sidebar-link-active' : ''}`} title="Dashboard"><Activity size={16} />{!sidebarCollapsed && <span>Dashboard</span>}</button>
-          <button onClick={() => setActiveView('bridges')} className={`sidebar-link ${activeView === 'bridges' ? 'sidebar-link-active' : ''}`} title="Data bridges"><ShieldCheck size={16} />{!sidebarCollapsed && <span>Data bridges</span>}</button>
+          <button onClick={() => setActiveView('bridges')} className={`sidebar-link ${activeView === 'bridges' ? 'sidebar-link-active' : ''}`} title="Data bridges"><img className="sidebar-logo" src={theme === 'dark' ? '/brand/logo-darkmode.png' : '/brand/logo-lightmode.png'} alt="" />{!sidebarCollapsed && <span>Data bridges</span>}</button>
         </nav>
         {!sidebarCollapsed && <div className="sidebar-footer"><span className="sidebar-status-dot" />Workspace secure</div>}
       </aside>
